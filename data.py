@@ -1,6 +1,11 @@
 import pandas as pd
 import random
 
+SEED = 42
+TARGET_ROWS = 5000
+random.seed(SEED)
+rng = random.Random(SEED)
+
 # Mở rộng kho dữ liệu cực lớn để tạo sự đa dạng
 data_pool = {
     "Miền Bắc": {
@@ -41,23 +46,55 @@ data_pool = {
     }
 }
 
+shared_pool = [
+    "muối", "đường", "tiêu", "hành", "tỏi", "gừng", "ớt", "nước mắm", "rau thơm",
+    "ngò rí", "chanh", "dầu ăn", "gia vị", "hạt nêm", "nước lọc"
+]
+
+
+def build_sample(label):
+    label_data = data_pool[label]
+    selected_items = []
+
+    # Giữ phần lõi đặc trưng, nhưng không cho nó chiếm toàn bộ tín hiệu
+    core_count = rng.randint(2, 5)
+    selected_items.extend(rng.sample(label_data["ingredients"], core_count))
+
+    # Thêm nguyên liệu chung giữa nhiều vùng để bài toán khó hơn
+    shared_count = rng.randint(1, 3)
+    selected_items.extend(rng.sample(shared_pool, shared_count))
+
+    # Thỉnh thoảng trộn một nguyên liệu gây nhiễu từ vùng khác
+    if rng.random() < 0.32:
+        other_labels = [name for name in data_pool.keys() if name != label]
+        other_label = rng.choice(other_labels)
+        selected_items.append(rng.choice(data_pool[other_label]["ingredients"]))
+
+    # Từ khóa vùng miền chỉ xuất hiện không quá thường xuyên
+    if rng.random() < 0.28:
+        selected_items.append(rng.choice(label_data["keywords"]))
+
+    # Thêm một chút nhiễu từ ngữ chung để text giống thực tế hơn
+    if rng.random() < 0.22:
+        selected_items.append(rng.choice(["tươi", "sạch", "thơm", "đậm vị", "nhẹ"]))
+
+    # Loại trùng và xáo trộn thứ tự
+    selected_items = list(dict.fromkeys(selected_items))
+    rng.shuffle(selected_items)
+
+    return ", ".join(selected_items)
+
 rows = []
-for _ in range(5000):
-    label = random.choice(list(data_pool.keys()))
-    
-    # Chọn ngẫu nhiên số lượng nguyên liệu từ 4 đến 8 để dữ liệu phong phú hơn
-    num_items = random.randint(4, 8)
-    selected_items = random.sample(data_pool[label]["ingredients"], num_items)
-    
-    # Thêm từ khóa đặc trưng hoặc tên vùng miền (tỉ lệ 40%)
-    if random.random() > 0.6:
-        selected_items.append(random.choice(data_pool[label]["keywords"]))
-        
-    # Xáo trộn thứ tự các nguyên liệu
-    random.shuffle(selected_items)
-    
-    ingredients_str = ", ".join(selected_items)
-    rows.append({"ingredients": ingredients_str, "label": label})
+
+labels = list(data_pool.keys())
+base_count = TARGET_ROWS // len(labels)
+remainder = TARGET_ROWS % len(labels)
+
+for index, label in enumerate(labels):
+    target_count = base_count + (1 if index < remainder else 0)
+
+    for _ in range(target_count):
+        rows.append({"ingredients": build_sample(label), "label": label})
 
 df = pd.DataFrame(rows)
 # Xóa các dòng trùng lặp nếu có

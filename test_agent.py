@@ -10,31 +10,46 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 # Load mô hình của bạn
 try:
     model = joblib.load('cuisine_model.pkl')
-    vectorizer = joblib.load('vectorizer.pkl')
     print("✅ Đã nạp mô hình Local thành công.")
 except:
-    print("❌ Lỗi: Không tìm thấy file .pkl. Hãy chạy train.py trước.")
+    print("❌ Lỗi: Không tìm thấy file .pkl. Hãy chạy train_ai.py trước.")
     exit()
+
+CONFIDENCE_THRESHOLD = 0.45
 
 def stress_test_agent(ingredients, diet="Bình thường"):
     print(f"\n🚀 ĐANG TEST: [{ingredients}] | Chế độ: {diet}")
     
-    # Bước 1: Phân loại bằng mô hình Naive Bayes của Quân
-    input_vector = vectorizer.transform([ingredients])
-    region = model.predict(input_vector)[0]
-    print(f"📍 Local Model đoán vùng: {region}")
+    # Bước 1: Phân loại bằng mô hình Naive Bayes
+    region_probs = model.predict_proba([ingredients])[0]
+    
+    top3_indices = region_probs.argsort()[-3:][::-1]
+    top3_predictions = [
+        {"region": model.classes_[i], "confidence": float(region_probs[i])}
+        for i in top3_indices
+    ]
+    
+    top3_str = "\n".join(
+        [f"  - {p['region']}: {p['confidence']:.1%}" for p in top3_predictions]
+    )
+    print(f"📍 Top 3 dự đoán:\n{top3_str}")
 
     # Bước 2: Gọi Gemini để xử lý logic "oái ăm"
     prompt = f"""
     Bạn là đầu bếp AI. 
     Nguyên liệu người dùng nhập: {ingredients}.
-    Vùng miền dự đoán: {region}.
+    
+    Dự đoán Top 3 vùng miền từ mô hình Local:
+{top3_str}
+    
     Chế độ ăn: {diet}.
 
     NHIỆM VỤ:
     1. Nếu có vật không ăn được hoặc cực độc, phải CẢNH BÁO MẠNH và dừng lại.
-    2. Nếu các nguyên liệu quá mâu thuẫn (ví dụ: mắm tôm nấu với bơ), hãy nhận xét về sự kỳ lạ này trước khi gợi ý.
-    3. Gợi ý 1 món ăn dựa trên logic vùng miền hoặc giải pháp sáng tạo nhất.
+    2. Dựa trên xác suất top 3, hãy chọn hoặc kết hợp phong cách ẩm thực phù hợp nhất.
+    3. Nếu xác suất đều thấp, hãy suy luận độc lập từ nguyên liệu mà không bắt buộc vào một vùng miền.
+    4. Nếu các nguyên liệu mâu thuẫn, hãy nhận xét về sự kỳ lạ này trước khi gợi ý.
+    5. Gợi ý 1 món ăn dựa trên lý do suy luận tốt nhất.
     """
 
     try:

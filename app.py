@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 MODEL_NAME = "gemini-3-flash-preview"
+CONFIDENCE_THRESHOLD = 0.45
 
 # Tải mô hình Naive Bayes và Vectorizer đã huấn luyện
 try:
     local_model = joblib.load('cuisine_model.pkl')
-    vectorizer = joblib.load('vectorizer.pkl')
     model_ready = True
 except FileNotFoundError:
     model_ready = False
@@ -44,7 +44,7 @@ st.title("👨‍🍳 AI Chef Agent: Hybrid ML System")
 st.write("Sự kết hợp giữa **Naive Bayes (Local)** để phân loại vùng miền và **Gemini 3 Flash** để sáng tạo công thức.")
 
 if not model_ready:
-    st.error("⚠️ Không tìm thấy file `cuisine_model.pkl` hoặc `vectorizer.pkl`. Vui lòng chạy file `train.py` trước khi khởi động App!")
+    st.error("⚠️ Không tìm thấy file `cuisine_model.pkl`. Vui lòng chạy `train_ai.py` trước khi khởi động App!")
     st.stop()
 
 # Chia Tab nhập liệu
@@ -83,34 +83,50 @@ def process_cooking_request(text_input, image_input):
         final_ingredients = text_input
 
     # Bước 2: Sử dụng mô hình Local (Naive Bayes) để phân loại vùng miền
-    input_vector = vectorizer.transform([final_ingredients])
-    predicted_region = local_model.predict(input_vector)[0]
+    region_probs = local_model.predict_proba([final_ingredients])[0]
+    
+    top3_indices = region_probs.argsort()[-3:][::-1]
+    top3_predictions = [
+        {"region": local_model.classes_[i], "confidence": float(region_probs[i])}
+        for i in top3_indices
+    ]
+    predicted_region = top3_predictions[0]["region"]
+    confidence = top3_predictions[0]["confidence"]
+    
+    top3_str = "\n".join(
+        [f"- {p['region']}: {p['confidence']:.1%}" for p in top3_predictions]
+    )
     
     # Bước 3: Gửi kết quả phân loại sang Gemini để viết công thức
     final_prompt = f"""
     Bạn là một đầu bếp chuyên nghiệp. 
     Nguyên liệu: {final_ingredients}.
-    Vùng miền xác định bởi mô hình Local: {predicted_region}.
+    
+    Dự đoán Top 3 vùng miền từ mô hình Local:
+    {top3_str}
+    
     Chế độ ăn: {diet}. Khẩu phần: {servings} người.
     
     Yêu cầu:
-    1. Gợi ý 1 món ăn đặc sắc nhất chuẩn vị {predicted_region}.
-    2. Định dạng: Tên món (Bold), Calo, các bước thực hiện chi tiết.
-    3. Nếu có vật không ăn được trong nguyên liệu, hãy từ chối lịch sự.
+    1. Dựa trên xác suất top 3, hãy chọn hoặc kết hợp các phong cách ẩm thực phù hợp nhất với nguyên liệu.
+    2. Nếu xác suất đều thấp (tất cả < 50%), hãy suy luận độc lập từ nguyên liệu mà không bắt buộc theo một vùng miền.
+    3. Nếu nguyên liệu có tính chất mâu thuẫn (ví dụ: mắm tôm + bơ), hãy nhận xét rõ trước khi gợi ý.
+    4. Định dạng: Tên món (Bold), Calo, các bước thực hiện chi tiết.
+    5. Nếu có vật không ăn được trong nguyên liệu, hãy từ chối lịch sự.
     """
     
     recipe_response = client.models.generate_content(model=MODEL_NAME, contents=final_prompt)
-    return predicted_region, recipe_response.text
+    return predicted_region, confidence, recipe_response.text
 
 # --- 5. NÚT THỰC THI ---
 if st.button("🔥 PHÂN TÍCH & GỢI Ý", use_container_width=True):
     if ingredients_text.strip() or input_img:
         with st.spinner("Đang chạy Pipeline: Phân loại Local -> Sáng tạo Gemini..."):
             try:
-                region, result = process_cooking_request(ingredients_text, input_img)
+                region, confidence, result = process_cooking_request(ingredients_text, input_img)
                 
                 st.success("Xong rồi!")
-                st.info(f"📍 **Kết quả phân loại từ Naive Bayes:** Đây là phong cách ẩm thực **{region}**")
+                st.info(f"📍 **Kết quả phân loại từ Naive Bayes:** **{region}** ({confidence:.1%})")
                 st.markdown(result)
                 
                 # Lưu vào lịch sử
