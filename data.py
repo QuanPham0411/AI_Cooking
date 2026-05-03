@@ -1,104 +1,238 @@
-import pandas as pd
-import random
+import json
 
-SEED = 42
-TARGET_ROWS = 5000
-random.seed(SEED)
-rng = random.Random(SEED)
+def generate_final_database():
+    # --- MIỀN BẮC (50 MÓN ĐỘC NHẤT) ---
+    north = [
+        ("Phở Bò Hà Nội", ["bánh phở", "thịt bò", "quế", "hồi", "thảo quả", "gừng", "hành lá"], ["Ninh xương bò cùng gừng nướng 8 tiếng.", "Thịt bò thái mỏng chần tái.", "Chan nước dùng quế hồi thơm nồng."], 450),
+        ("Bún Chả Hà Nội", ["thịt ba chỉ", "bún", "đu đủ", "nước mắm", "hành tím", "tỏi"], ["Ướp thịt với mắm tỏi rồi nướng than hoa.", "Làm nước chấm chua ngọt kèm dưa góp.", "Ăn kèm bún và rau sống."], 600),
+        ("Bún Đậu Mắm Tôm", ["bún lá", "đậu phụ", "mắm tôm", "thịt heo", "tía tô", "chanh"], ["Rán đậu vàng giòn các mặt.", "Thịt chân giò luộc thái lát mỏng.", "Pha mắm tôm sủi bọt với chanh đường."], 552),
+        ("Chả Cá Lã Vọng", ["cá lăng", "nghệ", "thì là", "mắm tôm", "đậu phộng", "mẻ"], ["Cá lăng ướp nghệ mẻ rồi nướng sơ.", "Xào cá trên chảo với thì là hành lá.", "Ăn nóng kèm bún và đậu phộng."], 503),
+        ("Nem Rán Hà Nội", ["thịt heo", "miến", "mộc nhĩ", "nấm hương", "bánh đa nem", "trứng"], ["Trộn nhân thịt rau củ với trứng.", "Cuốn nem chặt tay vào bánh đa.", "Rán vàng giòn qua hai lần lửa."], 404),
+        ("Xôi Xéo Hà Nội", ["gạo nếp", "đỗ xanh", "hành phi", "nghệ", "mỡ lợn"], ["Đồ nếp ngâm nghệ thành xôi dẻo.", "Đỗ xanh hấp nhừ giã nắm thành viên.", "Cắt đỗ xanh lên xôi rưới mỡ hành."], 525),
+        ("Canh Sấu Sườn Non", ["sườn non", "quả sấu", "hành lá", "ngò gai"], ["Hầm sườn non lấy nước ngọt thanh.", "Cho sấu vào đun sôi rồi dầm nát.", "Nêm gia vị và hành lá ngò gai."], 306),
+        ("Bún Thang", ["bún", "thịt gà", "trứng", "giò lụa", "tôm khô", "nấm hương"], ["Ninh nước dùng xương gà và tôm khô.", "Thái chỉ thịt gà, giò lụa, trứng tráng.", "Xếp nguyên liệu lên bún rồi chan nước."], 387),
+        ("Cá Kho Làng Vũ Đại", ["cá trắm", "riềng", "tương bần", "nước màu", "gừng"], ["Ướp cá với tương bần và riềng gừng.", "Xếp riềng đáy nồi đất đặt cá lên.", "Kho lửa nhỏ liu riu trong 12 tiếng."], 458),
+        ("Bún Ốc Hà Nội", ["bún", "ốc nhồi", "cà chua", "giấm bỗng", "tía tô"], ["Ốc nhồi luộc chín khêu lấy thịt.", "Nấu nước dùng cà chua giấm bỗng.", "Chan nước dùng chua thanh vào tô bún."], 359),
+        ("Miến Lươn Cao Bằng", ["miến dong", "lươn tươi", "rau răm", "hành khô"], ["Làm sạch lươn, lọc xương lấy thịt.", "Xào lươn săn hoặc chiên giòn.", "Nấu miến với nước hầm xương lươn."], 320),
+        ("Bún Mọc Thanh Mai", ["bún", "giò sống", "mộc nhĩ", "sườn non", "hành"], ["Nặn mọc từ giò sống và mộc nhĩ.", "Ninh sườn lấy nước dùng trong vắt.", "Thả mọc vào nồi nước dùng đun chín."], 415),
+        ("Bánh Đa Cua Hải Phòng", ["bánh đa đỏ", "cua đồng", "chả lá lốt", "rau nhút"], ["Nấu nước riêu cua đồng đậm đà.", "Chần bánh đa đỏ dai ngon.", "Thêm chả lá lốt và gạch cua xào."], 440),
+        ("Chả Lá Lốt", ["thịt heo băm", "lá lốt", "hành khô", "tiêu"], ["Trộn thịt với hành tiêu cho thấm.", "Cuốn thịt vào lá lốt thành ống dài.", "Rán vàng thơm trên chảo dầu."], 360),
+        ("Thịt Chưng Mắm Tôm", ["thịt ba chỉ", "mắm tôm", "sả", "ớt", "đường"], ["Thái thịt hạt lựu rán cháy cạnh.", "Xào sả ớt rồi cho mắm tôm vào.", "Chưng thịt mắm đến khi keo lại."], 480),
+        ("Bún Cá Cay Hải Phòng", ["bún", "cá thu", "ớt tươi", "dọc mùng", "nghệ"], ["Cá thu chiên vàng giòn rụm.", "Nấu nước lèo chua cay cùng nghệ.", "Ăn kèm bún và dọc mùng chần."], 390),
+        ("Gà Tần Thuốc Bắc", ["thịt gà", "thuốc bắc", "ngải cứu", "gừng"], ["Cho gà vào thố cùng thảo mộc.", "Hầm cách thủy trong khoảng 2 tiếng.", "Dùng nóng để bồi bổ sức khỏe."], 420),
+        ("Bánh Cuốn Thanh Trì", ["bột gạo", "hành phi", "nước mắm", "chả quế"], ["Tráng bánh mỏng bằng hơi nước.", "Thoa mỡ hành phi thơm lên mặt bánh.", "Chấm mắm chua ngọt kèm chả quế."], 310),
+        ("Nộm Đu Đủ Bò Khô", ["đu đủ", "bò khô", "đậu phộng", "rau thơm"], ["Bào sợi đu đủ xanh và cà rốt.", "Pha nước mắm chua cay mặn ngọt.", "Trộn đều các nguyên liệu với bò khô."], 220),
+        ("Xôi Gấc", ["gạo nếp", "quả gấc", "rượu trắng", "đường"], ["Trộn thịt gấc vào gạo nếp ngâm sẵn.", "Đồ xôi chín dẻo có màu đỏ tươi.", "Trộn thêm đường cho vị ngọt nhẹ."], 510),
+        ("Cá Chép Om Dưa", ["cá chép", "dưa chua", "thịt ba chỉ", "cà chua"], ["Rán sơ cá chép cho săn thịt.", "Xào thịt ba chỉ và dưa chua.", "Cho cá vào om cùng dưa và nước."], 400),
+        ("Canh Cua Rau Mồng Tơi", ["cua đồng", "rau mồng tơi", "mướp", "mắm tôm"], ["Giã cua đồng lọc lấy nước nấu thịt.", "Khi nước sôi thả mướp và rau vào.", "Nêm chút mắm tôm cho đậm đà."], 180),
+        ("Nem Tai Bà Hồng", ["tai heo", "thính gạo", "lá sung", "ớt tỏi"], ["Luộc chín tai heo rồi thái sợi mỏng.", "Trộn tai heo với thính gạo thơm.", "Cuốn lá sung chấm nước mắm tỏi."], 260),
+        ("Bún Dọc Mùng", ["bún", "dọc mùng", "mọc", "móng giò", "nghệ"], ["Ninh móng giò lấy nước lèo trong.", "Làm sạch dọc mùng bóp muối nghệ.", "Thả mọc vào nấu chín ăn cùng bún."], 430),
+        ("Cháo Sườn Quẩy", ["gạo tẻ", "sườn non", "quẩy", "hạt tiêu"], ["Ninh gạo với sườn cho nhừ thành cháo.", "Xé nhỏ sườn non trộn vào cháo.", "Rắc tiêu, hành lá ăn kèm quẩy giòn."], 320),
+        ("Rau Muống Xào Tỏi", ["rau muống", "tỏi", "dầu ăn"], ["Chần sơ rau muống qua nước sôi.", "Phi thơm tỏi băm với dầu ăn.", "Xào nhanh rau muống trên lửa lớn."], 120),
+        ("Cá Diếc Kho Tương", ["cá diếc", "tương bần", "gừng", "khế chua"], ["Làm sạch cá diếc để nguyên con.", "Xếp khế chua đáy nồi rồi đặt cá lên.", "Kho với tương bần và gừng lát."], 340),
+        ("Bún Ốc Chuối Đậu", ["ốc", "chuối xanh", "đậu phụ", "nghệ", "tía tô"], ["Ốc luộc khêu thịt, chuối tước vỏ.", "Xào chuối đậu với nghệ cho vàng.", "Ninh chuối nhừ rồi cho ốc vào."], 380),
+        ("Thịt Đầu Rồng Rang Cháy Cạnh", ["thịt đầu rồng", "hành lá", "nước mắm"], ["Thái thịt miếng vừa ăn rán cháy cạnh.", "Nêm nước mắm đường cho đậm đà.", "Rắc hành lá cắt khúc lên trên."], 410),
+        ("Canh Khoai Sọ Móng Giò", ["khoai sọ", "móng giò", "rau ngổ"], ["Ninh móng giò cho mềm thịt.", "Cho khoai sọ vào hầm cùng nước dùng.", "Thêm rau ngổ và ngò gai cho thơm."], 350),
+        ("Gà Rang Muối", ["thịt gà", "gạo nếp", "đỗ xanh", "sả"], ["Chiên gà vàng giòn các mặt.", "Làm muối từ nếp và đỗ xanh rang.", "Xóc gà chiên với hỗn hợp muối sả."], 490),
+        ("Phở Gà Hà Nội", ["bánh phở", "thịt gà", "lá chanh", "gừng"], ["Ninh xương gà với gừng nướng thơm.", "Thịt gà luộc xé phay hoặc thái lát.", "Xếp bánh phở gà rắc lá chanh chỉ."], 400),
+        ("Bún Cá Hải Phòng", ["bún", "cá đồng", "thì là", "nghệ", "cà chua"], ["Rán cá đồng cho thật giòn vàng.", "Nấu nước dùng cá nêm nghệ chua.", "Trình bày thì là và cá rán lên bún."], 375),
+        ("Bánh Đa Trộn", ["bánh đa đỏ", "giò lụa", "đậu phụ", "rau cần"], ["Chần bánh đa đỏ vừa độ dai.", "Trộn bánh đa với xì dầu, mỡ hành.", "Thêm giò, đậu rán và rau cần."], 340),
+        ("Ngan Cháy Tỏi", ["thịt ngan", "tỏi", "gừng", "rượu trắng"], ["Ướp ngan với gia vị và gừng rượu.", "Chiên ngan ngập dầu cho giòn bì.", "Xóc ngan với thật nhiều tỏi phi."], 560),
+        ("Bún Bung Hoa Chuối", ["bún", "sườn", "hoa chuối", "mẻ", "nghệ"], ["Ninh sườn với nước dùng mẻ nghệ.", "Hoa chuối thái mỏng ngâm muối trắng.", "Nấu hoa chuối với sườn ăn cùng bún."], 350),
+        ("Lòng Lợn Tiết Canh", ["lòng lợn", "tiết heo", "rau húng", "đậu phộng"], ["Luộc chín lòng và tim gan heo.", "Đánh tiết canh với nước cốt tỏi.", "Ăn kèm lòng luộc và rau thơm."], 520),
+        ("Canh Rau Ngót Thịt Băm", ["rau ngót", "thịt heo băm", "hành khô"], ["Vò rau ngót cho hơi nát để tiết vị.", "Xào thịt băm rồi cho nước vào đun.", "Thả rau ngót nấu sôi 2 phút."], 150),
+        ("Cá Rô Phi Nướng Sả", ["cá rô phi", "sả", "ớt", "dầu hào"], ["Ướp cá nguyên con với sả băm ớt.", "Nướng cá trên than hoặc lò nướng.", "Ăn kèm bún và nước mắm chua ngọt."], 330),
+        ("Miến Ngan Hà Nội", ["miến dong", "thịt ngan", "măng khô"], ["Ninh ngan lấy nước dùng ngọt.", "Măng khô ngâm nở hầm cùng ngan.", "Chần miến cho vào bát thêm thịt ngan."], 410),
+        ("Su Su Xào Trứng", ["su su", "trứng gà", "hành lá"], ["Bào sợi su su rồi xào với tỏi.", "Đánh tan trứng gà đổ vào chảo rau.", "Đảo nhanh tay rắc thêm hành lá."], 210),
+        ("Bánh Tôm Hồ Tây", ["tôm tươi", "khoai lang", "bột mì"], ["Thái sợi khoai lang trộn bột mì.", "Đặt tôm lên bánh khoai rồi chiên.", "Ăn kèm nước mắm đu đủ và rau sống."], 450),
+        ("Phở Cuốn", ["bánh phở miếng", "thịt bò", "xà lách", "rau thơm"], ["Xào thịt bò với tỏi cho săn.", "Trải bánh phở cuốn thịt bò xà lách.", "Chấm nước mắm tỏi ớt chua ngọt."], 280),
+        ("Chả Cốm", ["giò sống", "cốm tươi", "mỡ heo"], ["Trộn giò sống với cốm và mỡ hạt lựu.", "Hấp sơ chả cốm cho định hình.", "Rán vàng chả cốm ăn cùng bún đậu."], 420),
+        ("Bún Mọc Sườn", ["bún", "giò sống", "sườn", "măng chua"], ["Ninh sườn với măng chua lấy nước.", "Vò viên mọc thả vào nước dùng.", "Chan nước dùng vào tô bún mọc sườn."], 440),
+        ("Thịt Kho Trứng Kiểu Bắc", ["thịt ba chỉ", "trứng vịt", "nước mắm", "kẹo đắng"], ["Thái thịt miếng to kho với trứng.", "Sử dụng kẹo đắng cho màu cánh gián.", "Kho lâu cho thịt mềm rã mỡ."], 460),
+        ("Nem Chua Nam Định", ["thịt heo", "bì heo", "thính", "lá đinh lăng"], ["Thái mỏng thịt và bì trộn thính.", "Gói chặt trong lá đinh lăng lá chuối.", "Để lên men tự nhiên trong 2 ngày."], 220),
+        ("Cơm Rang Dưa Bò", ["gạo", "thịt bò", "dưa chua", "trứng"], ["Rang cơm với trứng cho tơi hạt.", "Xào thịt bò với dưa chua đậm đà.", "Đổ bò xào lên cơm rang nóng."], 540),
+        ("Canh Cá Nấu Ám", ["cá quả", "rau cần", "nghệ", "hành lá"], ["Nấu cá quả với nghệ và khế chua.", "Khi cá chín thả rau cần vào nồi.", "Dùng nóng kèm bún sợi nhỏ."], 290),
+        ("Bún Riêu Giò Heo", ["bún", "cua đồng", "giò heo", "cà chua"], ["Nấu riêu cua đồng lấy thịt cua.", "Ninh chân giò heo cho mềm nhừ.", "Kết hợp riêu và chân giò trong tô bún."], 580)
+    ]
 
-# Mở rộng kho dữ liệu cực lớn để tạo sự đa dạng
-data_pool = {
-    "Miền Bắc": {
-        "ingredients": [
-            "bún chả", "phở bò", "nem rán", "mắm tôm", "tía tô", "lá lốt", "hành lá", "sườn xào", 
-            "giấm bỗng", "bánh đa", "su hào", "quả sấu", "tương bần", "mắc khén", "hạt dổi", 
-            "rau muống", "thịt đông", "cốm", "bánh chưng", "dưa hành", "cá kho làng Vũ Đại", 
-            "măng khô", "mộc nhĩ", "miến dong", "rau cần", "su su", "thịt chim", "bún thang"
-        ],
-        "keywords": ["Hà Nội", "Tây Bắc", "Đông Bắc", "chuẩn vị Bắc", "thanh đạm"]
-    },
-    "Miền Trung": {
-        "ingredients": [
-            "mắm ruốc", "ớt bột", "ớt xanh", "bún bò huế", "tôm chua", "hạt nén", "vả", "bánh tráng", 
-            "mì quảng", "hến", "chả bò", "củ nén", "ớt xiêm", "mắm nêm", "tương ớt Hội An", 
-            "cá nục", "vịt lộn", "bánh lọc", "bánh bèo", "cao lầu", "ram ít", "kẹo mè xửng",
-            "mắm cá cơm", "ớt sừng", "măng chua", "thịt heo luộc", "mắm cái"
-        ],
-        "keywords": ["Huế", "Đà Nẵng", "Quảng Nam", "cay nồng", "đậm đà"]
-    },
-    "Miền Nam": {
-        "ingredients": [
-            "nước cốt dừa", "mắm sặc", "mắm linh", "đường thốt nốt", "rau đắng", "bông súng", 
-            "cá kho tộ", "canh chua", "hủ tiếu", "khô sặc", "me chua", "chuối", "lá giang", 
-            "chuột đồng", "cá lóc", "tôm càng xanh", "bánh xèo", "bánh khọt", "lẩu mắm",
-            "kho quẹt", "rau choại", "bông điên điển", "kèo nèo", "thịt vắt", "mắm bò hóc"
-        ],
-        "keywords": ["Miền Tây", "Sài Gòn", "ngọt thanh", "phóng khoáng", "dân dã"]
-    },
-    "Món Âu": {
-        "ingredients": [
-            "cheese", "butter", "olive oil", "pasta", "rosemary", "thyme", "beefsteak", "cream", 
-            "mayonnaise", "bacon", "salmon", "parsley", "basil", "oregano", "truffle oil", 
-            "balsamic vinegar", "parmesan", "mozzarella", "asparagus", "lamb chop", "wine",
-            "pepperoni", "spaghetti", "lasagna", "tuna", "avocado", "shrimp cocktail"
-        ],
-        "keywords": ["Italy", "Pháp", "tinh tế", "béo ngậy", "sang trọng"]
-    }
-}
+    # --- MIỀN TRUNG (50 MÓN ĐỘC NHẤT) ---
+    central = [
+        ("Bún Bò Huế", ["bún sợi to", "thịt bò", "giò heo", "mắm ruốc", "sả"], ["Ninh xương bò với sả và mắm ruốc.", "Luộc thịt bò giò heo thái miếng.", "Chan nước lèo cay nồng vào tô bún."], 600),
+        ("Mì Quảng Tôm Thịt", ["mì quảng", "tôm", "thịt heo", "bánh tráng", "hạt nén"], ["Nấu nước lèo đậm đặc từ tôm thịt.", "Phi thơm hạt nén với dầu phộng.", "Trình bày mì với ít nước và lạc."], 501),
+        ("Cơm Hến Huế", ["cơm", "hến", "da heo", "mắm ruốc", "rau dọc mùng"], ["Hến xào săn với gia vị và ớt.", "Nấu nước luộc hến với gừng nóng.", "Trộn cơm với hến và các loại rau."], 422),
+        ("Bánh Xèo Miền Trung", ["bột gạo", "tôm", "thịt", "giá đỗ", "ớt bột"], ["Đổ bột mỏng vào chảo nhỏ chiên giòn.", "Cho nhân tôm thịt giá vào giữa.", "Ăn cuốn bánh tráng và rau sống."], 453),
+        ("Nem Lụi Huế", ["thịt heo", "sả cây", "gia vị", "ớt", "đậu phộng"], ["Quết thịt heo quấn quanh cây sả.", "Nướng than hồng cho thơm vàng.", "Chấm nước sốt gan heo béo ngậy."], 484),
+        ("Bánh Bèo Huế", ["bột gạo", "tôm khô", "hành lá", "da heo chiên"], ["Hấp bột gạo trong chén nhỏ.", "Làm tôm chấy rắc lên mặt bánh.", "Rưới mỡ hành và da heo chiên giòn."], 320),
+        ("Bún Cá Ngừ Đại Dương", ["bún", "cá ngừ", "thơm", "cà chua", "ớt xanh"], ["Kho cá ngừ với thơm và cà chua.", "Nấu nước lèo chua cay miền Trung.", "Chan nước cá kho vào tô bún."], 356),
+        ("Cao Lầu Hội An", ["mì cao lầu", "thịt xá xíu", "giá đỗ", "rau thơm"], ["Ram thịt heo làm xá xíu đậm vị.", "Trụng mì cao lầu với giá đỗ.", "Xếp thịt rưới sốt ram lên mì."], 457),
+        ("Hến Xúc Bánh Tráng", ["hến", "bánh tráng", "sả", "ớt", "rau răm"], ["Xào hến với sả ớt và hành tím.", "Thêm rau răm thái nhỏ vào chảo.", "Dùng bánh tráng nướng xúc hến."], 388),
+        ("Bún Mắm Nêm Đà Nẵng", ["bún", "thịt heo", "mắm nêm", "thơm", "rau sống"], ["Luộc thịt heo rồi thái miếng mỏng.", "Pha mắm nêm với thơm và tỏi ớt.", "Trộn bún với thịt và mắm nêm."], 409),
+        ("Chả Ram Ít", ["tôm", "thịt", "bánh tráng mỏng", "bánh ít"], ["Cuốn tôm thịt làm ram chiên giòn.", "Hấp bánh ít bột gạo cho dẻo.", "Đặt ram lên bánh ít chấm mắm."], 460),
+        ("Bánh Lọc Trần", ["bột năng", "tôm", "thịt ba chỉ", "hành lá"], ["Nhào bột năng gói nhân tôm thịt.", "Luộc bánh trong nước sôi đến khi trong.", "Vớt ra trộn mỡ hành cho bóng."], 340),
+        ("Bánh Nậm", ["bột gạo", "tôm", "lá dong"], ["Trải bột lá dong rắc tôm khô giã.", "Gói mỏng rồi hấp chín 15 phút.", "Ăn kèm nước mắm mặn ớt cay."], 310),
+        ("Bún Sứa Quy Nhơn", ["bún", "sứa tươi", "chả cá", "đậu phộng"], ["Sơ chế sứa giòn ngâm muối gừng.", "Nấu nước lèo cá thu thanh ngọt.", "Trình bày sứa chả cá lên bún."], 320),
+        ("Cá Nục Hấp Cuốn Bánh Tráng", ["cá nục", "bánh tráng", "rau muống", "ớt xanh"], ["Hấp cá nục với hành và gừng.", "Cuốn cá rau muống vào bánh tráng.", "Chấm mắm nêm pha thơm đặc đặc."], 380),
+        ("Tré Bình Định", ["tai heo", "thịt đầu", "riềng", "thính"], ["Thái thịt đầu tai heo luộc chín.", "Trộn riềng thính gói lá ổi chuối.", "Ủ trong 2 ngày cho thấm vị."], 300),
+        ("Gà Chỉ Phú Yên", ["thịt gà", "lá giang", "ớt xiêm"], ["Hấp gà lá giang thơm nồng.", "Xé gà chấm muối tiêu ớt xiêm.", "Dùng kèm cơm lam hoặc bánh mì."], 450),
+        ("Lòng Xào Nghệ", ["lòng lợn", "nghệ tươi", "hẹ"], ["Làm sạch lòng heo thái miếng.", "Giã nghệ tươi xào thơm với lòng.", "Thêm hẹ đảo nhanh tay rồi tắt bếp."], 380),
+        ("Bánh Căn Phan Thiết", ["bột gạo", "trứng cút", "mỡ hành"], ["Đổ bột vào khuôn đất nung nóng.", "Thêm trứng cút vào giữa bánh.", "Chấm nước mắm cá kho đậm đà."], 420),
+        ("Bún Song Thằn", ["đậu xanh", "thịt gà", "nấm"], ["Sử dụng bún làm từ đậu xanh.", "Nấu nước lèo gà trong thanh.", "Thêm gà xé và nấm hương."], 350),
+        ("Ram Tôm Đất", ["tôm đất", "bánh tráng", "hành tím"], ["Cuốn tôm đất nguyên con vào bánh.", "Chiên giòn rụm trong chảo dầu.", "Ăn kèm rau sống nước mắm mặn."], 440),
+        ("Canh Chua Cá Khoai", ["cá khoai", "me", "rau cần"], ["Nấu nước me chua thả cá khoai.", "Cá chín tới cho rau cần hành lá.", "Dùng ngay khi nóng tránh nát cá."], 220),
+        ("Cá Ngừ Kho Thơm", ["cá ngừ", "thơm", "ớt khô"], ["Chiên sơ cá ngừ cho chắc thịt.", "Kho với thơm và nước màu dừa.", "Đun cạn nước cho cá thấm vị."], 400),
+        ("Cơm Gà Tam Kỳ", ["gà ta", "gạo", "nghệ", "rau răm"], ["Nấu cơm bằng nước luộc gà nghệ.", "Xé gà trộn rau răm hành tây.", "Trình bày cơm kèm gà bóp."], 550),
+        ("Bánh Vá Tiền Giang", ["bột gạo", "tôm", "giá", "đậu xanh"], ["Đổ bột vào vá đặt tôm giá lên.", "Chiên ngập dầu cho bánh giòn khú.", "Chấm nước mắm tỏi ớt chua ngọt."], 480),
+        ("Lẩu Thả Phan Thiết", ["cá mai", "thịt heo", "trứng", "bún"], ["Sơ chế cá mai bóp chanh gừng.", "Bày trí các loại nhân quanh cá.", "Chan nước dùng tôm thịt nóng."], 500),
+        ("Gỏi Cá Nam Ô", ["cá trích", "thính", "gừng", "riềng"], ["Lọc cá trích trộn riềng thính.", "Cuốn lá rừng với cá và rau sống.", "Chấm nước sốt cá đặc chế."], 320),
+        ("Bánh Canh Cá Lóc", ["bột gạo", "cá lóc", "hành tăm"], ["Nấu bánh canh từ bột gạo tươi.", "Dằm cá lóc kho thơm hành tăm.", "Chan nước lèo cay đặc trưng."], 390),
+        ("Cháo Lươn Nghệ An", ["lươn", "nghệ", "hành tăm", "gạo"], ["Xào thịt lươn với nghệ hành tăm.", "Nấu cháo gạo tẻ thật nhừ mượt.", "Trộn lươn xào vào cháo khi ăn."], 360),
+        ("Mực Rim Me", ["mực khô", "me", "ớt", "đường"], ["Rim mực khô với sốt me chua.", "Đun nhỏ lửa đến khi mực keo lại.", "Ăn kèm cơm trắng hoặc nhâm nhi."], 400),
+        ("Bún Thịt Nướng Huế", ["bún", "thịt heo", "vừng", "tương đậu"], ["Nướng thịt heo ướp sả vừng thơm.", "Làm nước tương đậu béo ngậy.", "Trộn bún với thịt và tương đậu."], 510),
+        ("Bánh Thuẫn", ["trứng", "bột năng", "đường"], ["Đánh trứng với bột cho bông xốp.", "Nướng bằng khuôn gang than hồng.", "Dùng làm quà bánh ngày tết."], 250),
+        ("Nem Chua Ninh Hòa", ["thịt heo", "da heo", "tỏi", "ớt"], ["Quết thịt heo thật nhuyễn mịn.", "Trộn bì heo sợi gói lá chuối.", "Để lên men tự nhiên 3 ngày."], 290),
+        ("Bún Cá Cam", ["bún", "cá cam", "thơm", "cà chua"], ["Kho cá cam với gia vị đậm đà.", "Nấu nước lèo thơm cà miền Trung.", "Chan nước vào bún ăn cùng cá."], 380),
+        ("Chè Cung Đình", ["hạt sen", "đậu xanh", "đường phèn"], ["Nấu nhừ hạt sen và đậu xanh.", "Thêm đường phèn vị ngọt thanh.", "Dùng lạnh sau bữa ăn."], 200),
+        ("Canh Hến Nấu Bầu", ["hến", "bí bầu", "hành lá"], ["Luộc hến lấy thịt và nước lèo.", "Xào hến thơm rồi cho bầu vào.", "Nấu sôi nêm hành lá rau răm."], 180),
+        ("Bánh Bèo Chén", ["bột gạo", "tôm chấy", "mỡ hành"], ["Hấp bánh gạo trong chén sứ nhỏ.", "Rắc tôm chấy và mỡ hành lên.", "Rưới nước mắm ngọt vào chén."], 300),
+        ("Cá Cam Kho Ớt Xanh", ["cá cam", "ớt xanh", "nước mắm"], ["Chiên sơ cá cam rồi cho ớt vào.", "Kho với nước mắm đường sệt lại.", "Vị cay nồng đặc trưng ớt miền Trung."], 410),
+        ("Gà Kho Sả Nghệ", ["thịt gà", "sả", "nghệ", "ớt"], ["Ướp gà với sả nghệ giã nhỏ.", "Kho thịt gà săn lại đậm đà.", "Dùng nóng với cơm gạo mới."], 430),
+        ("Lươn Xào Sả Ớt", ["lươn", "sả", "ớt", "đậu phộng"], ["Làm sạch lươn thái miếng xào sả.", "Thêm đậu phộng rang giòn thơm.", "Ăn kèm bánh tráng nướng."], 390),
+        ("Bún Chả Cá Quy Nhơn", ["bún", "chả cá", "thì là", "măng chua"], ["Làm chả cá thu dai giòn thơm.", "Nấu nước lèo măng chua thanh.", "Thêm chả cá vào tô bún nóng."], 400),
+        ("Gỏi Sứa Trộn Xoài", ["sứa", "xoài xanh", "đậu phộng"], ["Sơ chế sứa giòn trộn xoài bào.", "Rưới nước mắm chua cay mặn.", "Rắc lạc rang ăn kèm phồng tôm."], 180),
+        ("Bánh Hỏi Cháo Lòng", ["bánh hỏi", "cháo", "lòng lợn"], ["Nấu cháo loãng với tiết heo.", "Làm bánh hỏi rưới mỡ hành lá.", "Ăn kèm lòng luộc và cháo nóng."], 550),
+        ("Cá Tai Tượng Chiên Xù", ["cá tai tượng", "mắm nêm", "rau"], ["Chiên cá ngập dầu cho vảy xù.", "Cuốn bánh tráng với rau rừng.", "Chấm mắm nêm đậm vị miền Trung."], 480),
+        ("Mực Hấp Gừng", ["mực tươi", "gừng", "hành lá"], ["Hấp mực tươi với gừng thái chỉ.", "Làm nước mắm gừng chua cay.", "Dùng nóng để giữ độ giòn của mực."], 250),
+        ("Súp Lươn Nghệ An", ["lươn", "nghệ", "hành tăm", "ớt"], ["Nấu súp lươn vị cay nồng đặc trưng.", "Thêm nhiều nghệ và hành tăm.", "Ăn kèm bánh mì hoặc bánh mướt."], 320),
+        ("Bánh Căn Tôm Mực", ["bột gạo", "tôm", "mực", "mỡ hành"], ["Đổ bánh căn thêm hải sản tươi.", "Nướng bánh giòn đáy mềm mặt.", "Chấm nước mắm đậu phộng chua cay."], 440),
+        ("Cơm Gà Hội An", ["gạo", "thịt gà", "nghệ", "hành tây"], ["Nấu cơm nghệ dẻo thơm nước gà.", "Trộn gà xé với rau răm hành tây.", "Bày ra đĩa ăn kèm tương ớt."], 540),
+        ("Bún Bắp Phú Yên", ["ngô", "thịt bò", "rau sống"], ["Làm sợi bún thủ công từ hạt ngô.", "Nấu nước dùng bò trong thanh.", "Vị bùi của bắp hòa quyện cùng bò."], 390),
+        ("Ốc Hút Đà Nẵng", ["ốc hút", "sả", "ớt", "nước dừa"], ["Xào ốc với sả và nước dừa.", "Nêm vị mặn cay nồng khó cưỡng.", "Dùng dụng cụ hút ốc khi còn nóng."], 310)
+    ]
 
-shared_pool = [
-    "muối", "đường", "tiêu", "hành", "tỏi", "gừng", "ớt", "nước mắm", "rau thơm",
-    "ngò rí", "chanh", "dầu ăn", "gia vị", "hạt nêm", "nước lọc"
-]
+    # --- MIỀN NAM (50 MÓN ĐỘC NHẤT) ---
+    south = [
+        ("Canh Chua Cá Lóc", ["cá lóc", "me", "bông súng", "bạc hà", "đường thốt nốt"], ["Nấu nước cốt me thả cá lóc.", "Thêm rau bông súng bạc hà giá.", "Nêm đường thốt nốt ngọt thanh."], 350),
+        ("Cơm Tấm Sườn Bì Chả", ["gạo tấm", "sườn", "bì heo", "chả trứng", "mỡ hành"], ["Nướng sườn mật ong vàng thơm.", "Làm chả trứng hấp từ thịt trứng.", "Rưới mỡ hành lên cơm tấm tơi."], 751),
+        ("Lẩu Mắm Miền Tây", ["mắm linh", "mắm sặc", "tôm", "thịt ba rọi", "nước cốt dừa"], ["Nấu rã mắm lọc lấy nước cốt mắm.", "Thêm nước cốt dừa và sả ớt.", "Nhúng rau sông nước vào nồi lẩu."], 802),
+        ("Bánh Khọt Vũng Tàu", ["bột gạo", "tôm", "nước cốt dừa", "hành lá"], ["Đổ bột cốt dừa vào khuôn nhỏ.", "Thêm tôm tươi vào giữa chiên giòn.", "Cuốn rau rừng chấm mắm ngọt."], 403),
+        ("Hủ Tiếu Nam Vang", ["hủ tiếu", "tôm", "gan heo", "thịt băm", "trứng cút"], ["Ninh nước xương với tôm khô mực.", "Chần hủ tiếu dai cùng topping.", "Chan nước dùng nóng hổi vào tô."], 504),
+        ("Cá Kho Tộ Nam Bộ", ["cá hú", "nước mắm", "đường thốt nốt", "tiêu"], ["Ướp cá hú với nước màu mắm tiêu.", "Kho cá trong tộ đất lửa nhỏ.", "Đun đến khi nước cá sệt lại béo."], 425),
+        ("Bánh Xèo Nam Bộ", ["bột gạo", "tôm", "thịt heo", "đậu xanh", "nước cốt dừa"], ["Tráng bánh to mỏng vàng giòn.", "Cho nhân tôm thịt đậu xanh giá.", "Ăn kèm rau sống và mắm chua ngọt."], 556),
+        ("Bún Nước Lèo Sóc Trăng", ["bún", "mắm bò hóc", "cá lóc", "tôm", "ngải bún"], ["Ninh mắm bò hóc với ngải bún.", "Gỡ thịt cá lóc và tôm luộc chín.", "Chan nước dùng đậm mùi mắm."], 380),
+        ("Kho Quẹt Nam Bộ", ["thịt ba chỉ", "tôm khô", "nước mắm", "đường"], ["Thắng mỡ heo làm tóp mỡ giòn.", "Rim tôm khô với mắm đường sệt.", "Chấm rau củ luộc hoặc cơm cháy."], 458),
+        ("Canh Lá Giang Gà", ["thịt gà", "lá giang", "ớt", "hành tím"], ["Xào gà săn rồi cho nước vào đun.", "Vò nát lá giang thả vào nồi.", "Nêm vị chua thanh dùng với bún."], 329),
+        ("Cá Lóc Nướng Trui", ["cá lóc", "rơm", "mỡ hành", "đậu phộng"], ["Xiên cá vào tre phủ rơm nướng.", "Cạo vỏ đen rưới mỡ hành lạc.", "Cuốn bánh tráng chấm mắm me."], 400),
+        ("Gỏi Cuốn Tôm Thịt", ["bánh tráng", "tôm", "thịt heo", "bún", "hẹ"], ["Luộc thịt heo thái lát mỏng.", "Cuốn tôm thịt bún rau thơm.", "Chấm tương hột xay béo ngậy."], 250),
+        ("Bò Kho Nam Bộ", ["thịt bò", "cà rốt", "sả", "quế", "bánh mì"], ["Hầm bò gân với sả và gia vị kho.", "Thêm cà rốt quế hồi cho thơm.", "Dùng kèm bánh mì đặc ruột."], 580),
+        ("Cơm Gà Xối Mỡ", ["gạo", "thịt gà", "mỡ lợn", "xì dầu"], ["Nấu cơm với nước dùng gà vàng.", "Chiên gà xối mỡ cho da giòn rụm.", "Ăn kèm dưa leo và nước tương."], 680),
+        ("Bún Thịt Nướng Sài Gòn", ["bún", "thịt heo", "sả", "chả giò", "đậu phộng"], ["Nướng thịt heo sả thơm vàng.", "Xếp bún chả giò rau sống vào tô.", "Rưới mắm chua ngọt mỡ hành."], 550),
+        ("Gỏi Ngó Sen Tôm Thịt", ["ngó sen", "tôm", "thịt", "chanh"], ["Bóp ngó sen với nước mắm chanh.", "Trộn tôm thịt luộc và rau thơm.", "Rắc hành phi đậu phộng rang."], 280),
+        ("Cháo Cá Lóc Miền Tây", ["gạo", "cá lóc", "nấm rơm", "rau đắng"], ["Nấu cháo trắng thật nhừ mịn.", "Thả cá lóc và nấm rơm vào.", "Ăn nóng kèm rau đắng đất."], 340),
+        ("Bánh Tằm Bì", ["bánh tằm", "bì heo", "nước cốt dừa", "dưa leo"], ["Hấp bánh tằm cho nóng dẻo.", "Trộn bánh với bì heo và dừa.", "Thêm nước mắm ngọt và rau sống."], 450),
+        ("Bún Cá Châu Đốc", ["bún", "cá lóc", "nghệ", "mắm linh"], ["Nấu nước lèo nghệ vàng ươm.", "Dằm thịt cá lóc xào nghệ thơm.", "Chan nước dùng ăn cùng bún."], 370),
+        ("Canh Chua Cá Linh", ["cá linh", "bông điên điển", "me", "ngò ôm"], ["Đun nước me thả cá linh tươi.", "Cá chín nhanh thả bông điên điển.", "Nêm đường cho chuẩn vị ngọt Nam."], 280),
+        ("Chuột Đồng Nướng Lu", ["chuột đồng", "ngũ vị hương", "mật ong"], ["Sơ chế chuột sạch ướp gia vị.", "Cho vào lu nướng vàng da giòn.", "Chấm muối tiêu chanh hoặc mắm."], 420),
+        ("Gỏi Ba Khía", ["ba khía", "đu đủ", "chanh", "ớt", "đường"], ["Tách ba khía trộn đu đủ bào.", "Vắt chanh đường ớt tỏi cay nồng.", "Món nhậu đặc sản miền Tây."], 150),
+        ("Vịt Nấu Chao", ["thịt vịt", "chao trắng", "khoai môn", "bún"], ["Ướp vịt với chao rồi hầm mềm.", "Cho khoai môn chiên vào nấu cùng.", "Ăn kèm bún sợi và rau muống."], 650),
+        ("Lẩu Cá Kèo", ["cá kèo", "lá giang", "rau đắng", "bún"], ["Nấu lẩu lá giang chua thanh.", "Thả cá kèo sống vào nồi nước sôi.", "Nhúng rau đắng dùng kèm bún."], 400),
+        ("Hủ Tiếu Mỹ Tho", ["hủ tiếu khô", "thịt băm", "tôm", "hành phi"], ["Chần sợi hủ tiếu Mỹ Tho dai.", "Trộn hủ tiếu với nước sốt đặc biệt.", "Thêm tôm thịt hành phi thơm lừng."], 480),
+        ("Cơm Dừa Bến Tre", ["gạo", "nước dừa", "tôm kho", "quả dừa"], ["Cho gạo nước dừa vào quả dừa.", "Hấp cách thủy cho cơm chín thơm.", "Ăn cùng tôm rim mặn ngọt."], 500),
+        ("Gỏi Sầu Đâu", ["lá sầu đâu", "khô cá sặc", "me", "dưa leo"], ["Trụng lá sầu đâu bớt đắng.", "Trộn lá với khô cá sặc xé nhỏ.", "Chấm nước mắm me đậm đà."], 220),
+        ("Cá Lóc Hấp Bầu", ["cá lóc", "quả bầu", "hành lá", "gừng"], ["Đặt cá lóc vào giữa quả bầu.", "Hấp cách thủy cùng hành gừng.", "Thịt cá ngọt quyện cùng vị bầu."], 320),
+        ("Bún Kèn Kiên Giang", ["bún", "cá thu", "cốt dừa", "nghệ"], ["Xay cá thu nấu sốt nghệ dừa béo.", "Chan sốt lên bún và rau đu đủ.", "Vị béo ngậy đặc trưng Rạch Giá."], 450),
+        ("Lẩu Cua Đồng Nam Bộ", ["cua đồng", "thịt bò", "rau mồng tơi"], ["Nấu nước riêu cua đồng thơm.", "Nhúng thịt bò và rau mồng tơi.", "Ăn kèm bún tươi hoặc bánh đa."], 520),
+        ("Gà Đốt Ô Thum", ["thịt gà", "lá chúc", "sả", "tỏi"], ["Ướp gà với lá chúc An Giang.", "Đốt gà trong nồi vàng giòn bì.", "Chấm muối ớt chúc cay nồng."], 580),
+        ("Bò Tơ Củ Chi", ["thịt bò tơ", "bánh tráng", "mắm nêm"], ["Hấp thịt bò tơ thái miếng mỏng.", "Cuốn bánh tráng rau rừng Tây Ninh.", "Chấm mắm nêm pha thơm cay."], 400),
+        ("Phá Lấu Lòng Bò", ["lòng bò", "nước cốt dừa", "quế", "hồi"], ["Nấu lòng bò với quế hồi sả.", "Thêm nước cốt dừa cho béo ngậy.", "Chấm bánh mì hoặc ăn kèm bún."], 620),
+        ("Gà Ác Tiềm Thảo Mộc", ["gà ác", "thuốc bắc", "hạt sen"], ["Hầm gà ác với các vị thuốc bắc.", "Thêm hạt sen bùi béo bổ dưỡng.", "Món ăn đại bổ cho người ốm."], 350),
+        ("Hủ Tiếu Gõ", ["hủ tiếu", "thịt heo", "hành phi", "giá"], ["Nấu nước xương ống lèo thanh.", "Thêm thịt thái mỏng hành phi.", "Món ăn đêm bình dân Sài Gòn."], 320),
+        ("Cá Lóc Kho Tiêu", ["cá lóc", "tiêu xanh", "nước mắm"], ["Kho cá lóc với nhiều tiêu xanh.", "Đun lửa nhỏ đến khi cạn nước.", "Vị cá cay nồng đậm đà hao cơm."], 380),
+        ("Tôm Rim Mặn Ngọt", ["tôm", "đường", "tỏi", "mắm"], ["Xào tôm cháy tỏi cho thơm.", "Rim tôm với đường mắm keo lại.", "Vỏ tôm giòn thịt tôm săn chắc."], 350),
+        ("Khổ Qua Nhồi Thịt", ["khổ qua", "thịt băm", "mộc nhĩ"], ["Nhồi thịt vào mướp đắng bỏ ruột.", "Nấu canh nước trong nêm hành lá.", "Món canh giải nhiệt ngày hè."], 250),
+        ("Canh Bí Đỏ Cốt Dừa", ["bí đỏ", "tôm khô", "nước cốt dừa"], ["Nấu bí đỏ nhừ với tôm khô.", "Rưới nước cốt dừa cho béo thơm.", "Vị ngọt bùi béo đặc trưng."], 310),
+        ("Gà Kho Gừng Nam Bộ", ["thịt gà", "gừng", "nước màu"], ["Kho gà với gừng thái sợi mỏng.", "Nêm nếm mặn ngọt kiểu miền Tây.", "Thịt gà săn thấm vị gừng ấm."], 410),
+        ("Ốc Bươu Nhồi Thịt", ["ốc bươu", "thịt băm", "sả", "mắm gừng"], ["Nhồi thịt băm vào vỏ ốc bươu.", "Hấp sả thơm lừng chấm mắm gừng.", "Vị giòn sần sật của thịt và ốc."], 380),
+        ("Bún Riêu Giò Heo", ["bún", "riêu cua", "giò heo", "huyết"], ["Nấu riêu cua đồng ninh giò heo.", "Thêm huyết heo và đậu hũ rán.", "Ăn kèm rau muống chẻ kinh giới."], 580),
+        ("Bánh Canh Cua", ["bánh canh", "thịt cua", "trứng cút"], ["Nấu nước dùng sệt vàng gạch cua.", "Thêm thịt cua tươi và trứng cút.", "Sợi bánh canh bột lọc dai trong."], 490),
+        ("Cá Linh Kho Lạt", ["cá linh", "nước dừa tươi", "xoài"], ["Kho cá linh non với nước dừa.", "Ăn kèm xoài xanh băm sợi.", "Món ngon mùa nước nổi miền Tây."], 330),
+        ("Gỏi Ngó Sen", ["ngó sen", "tôm", "thịt ba chỉ"], ["Bóp ngó sen giòn với giấm đường.", "Trộn tôm thịt luộc và rau thơm.", "Ăn kèm bánh phồng tôm chiên."], 270),
+        ("Bánh Tét Trà Cuôn", ["gạo nếp", "thịt heo", "đậu xanh", "trứng muối"], ["Gói bánh nếp nương nhân đa dạng.", "Luộc liên tục trong 12 tiếng.", "Màu tím từ lá cẩm đẹp mắt."], 500),
+        ("Bánh Gan", ["trứng gà", "hồi", "đường thốt nốt"], ["Đánh trứng với đường thốt nốt.", "Nướng lò cho bánh xốp mịn.", "Món tráng miệng truyền thống."], 320),
+        ("Chè Chuối Thưng", ["chuối", "cốt dừa", "khoai lang"], ["Nấu chuối sứ chín nhừ với dừa.", "Thêm khoai lang bùi bùi béo béo.", "Rắc đậu phộng rang khi ăn."], 350),
+        ("Lẩu Gà Lá Giang", ["thịt gà", "lá giang", "măng chua"], ["Nấu nước lẩu gà chua lá giang.", "Thêm măng chua cho nước đậm vị.", "Ăn cùng bún tươi và rau muống."], 420),
+        ("Khô Cá Sặc Kho Thơm", ["khô cá sặc", "thơm", "ớt"], ["Ngâm cá bớt mặn rồi kho thơm.", "Nêm đường ớt cho vị mặn ngọt.", "Món ăn dân dã đậm chất quê."], 390)
+    ]
 
+    # --- MÓN ÂU (50 MÓN ĐỘC NHẤT) ---
+    western = [
+        ("Beefsteak Classic", ["thịt bò", "bơ", "rosemary", "khoai tây", "tỏi"], ["Áp chảo thịt bò với bơ tỏi.", "Chiên khoai tây vàng giòn.", "Nấu sốt tiêu đen rưới lên steak."], 700),
+        ("Spaghetti Carbonara", ["mì ý", "bacon", "cheese", "trứng", "cream"], ["Luộc mì ý vừa chín tới al dente.", "Xào thịt bacon cháy cạnh thơm.", "Trộn mì nóng với kem trứng phô mai."], 651),
+        ("Pizza Pepperoni", ["đế pizza", "phô mai", "xúc xích", "sốt cà chua"], ["Phết sốt cà rắc phô mai Mozzarella.", "Xếp xúc xích Pepperoni lên mặt.", "Nướng lò 200 độ C trong 15 phút."], 902),
+        ("Salad Caesar", ["xà lách", "mayonnaise", "parmesan", "ức gà", "bánh mì"], ["Rửa rau xà lách trộn sốt Caesar.", "Ức gà nướng thái lát mỏng.", "Thêm bánh mì giòn rắc phô mai."], 353),
+        ("Cá Hồi Áp Chảo", ["cá hồi", "măng tây", "chanh", "bơ", "tỏi"], ["Áp chảo phi lê cá hồi da giòn.", "Xào măng tây với bơ tỏi.", "Làm sốt bơ chanh chua nhẹ."], 504),
+        ("Lasagna Beef", ["mì lasagna", "thịt bò băm", "sốt cà chua", "phô mai"], ["Làm sốt bò băm cà chua hành tây.", "Xếp lớp mì, sốt và phô mai.", "Nướng lò đến khi phô mai chảy."], 805),
+        ("Súp Kem Nấm", ["nấm", "cream", "bơ", "hành tây", "tỏi"], ["Xào nấm với bơ tỏi cho thơm.", "Xay mịn hỗn hợp nấm kem tươi.", "Đun liu riu súp nêm muối tiêu."], 256),
+        ("Hamburger Classic", ["bánh mì tròn", "thịt bò xay", "cheese", "xà lách"], ["Nướng chín thịt bò xay viên tròn.", "Xếp bánh mì, thịt, phô mai lát.", "Thêm sốt cà chua và xà lách."], 728),
+        ("Mì Ý Hải Sản", ["mì ý", "tôm", "mực", "rượu vang", "olive oil"], ["Luộc mì ý xào tỏi dầu olive.", "Thêm hải sản và chút rượu vang.", "Trộn mì rắc ngò tây thái nhỏ."], 589),
+        ("Risotto Mushroom", ["gạo arborio", "nấm", "cheese", "rượu vang"], ["Xào gạo với bơ và nấm hương.", "Thêm nước dùng gà từng chút một.", "Trộn phô mai Parmesan béo ngậy."], 550),
+        ("Beef Wellington", ["thịt bò thăn", "nấm", "bánh ngàn lớp", "gan ngỗng"], ["Bọc thịt bò với nấm băm pate.", "Cuộn chặt vào lớp vỏ bánh mỏng.", "Nướng lò cho vỏ bánh vàng rụm."], 850),
+        ("Súp Hành Tây Pháp", ["hành tây", "bánh mì", "cheese", "bơ"], ["Xào hành tây lửa nhỏ cho nâu sậm.", "Ninh nước dùng hành tây đậm vị.", "Đặt bánh mì phô mai lên bát súp."], 300),
+        ("Bò Sốt Vang Âu", ["thịt bò", "rượu vang đỏ", "khoai tây", "cà rốt"], ["Ướp bò với rượu vang đỏ thảo mộc.", "Hầm bò cùng khoai tây cà rốt nhừ.", "Ăn kèm bánh mì đặc ruột Pháp."], 620),
+        ("Salad Nga", ["khoai tây", "cà rốt", "mayonnaise", "trứng", "giò"], ["Luộc chín rau củ thái hạt lựu.", "Trộn đều với sốt mayonnaise.", "Để lạnh trước khi phục vụ."], 380),
+        ("Sườn Cừu Nướng", ["sườn cừu", "rosemary", "tỏi", "khoai tây"], ["Ướp sườn cừu với hương thảo tỏi.", "Nướng sườn trên vỉ cho chín hồng.", "Ăn kèm khoai tây nghiền sốt bạc hà."], 750),
+        ("Trứng Cuộn Pháp", ["trứng gà", "cheese", "bơ", "hành lá"], ["Đánh trứng mượt cuộn cùng bơ.", "Thêm phô mai chảy bên trong.", "Món ăn sáng kiểu Âu tinh tế."], 280),
+        ("Cá Ngừ Áp Chảo", ["cá ngừ", "vừng", "chanh", "wasabi"], ["Lăn cá ngừ qua lớp vừng trắng đen.", "Áp chảo tái các mặt miếng cá.", "Chấm nước tương wasabi cay nồng."], 400),
+        ("Tôm Cocktail", ["tôm", "sốt cocktail", "xà lách", "chanh"], ["Luộc tôm bóc vỏ bỏ chỉ lưng.", "Xếp tôm quanh ly xà lách sốt.", "Dùng lạnh khai vị bữa tiệc Âu."], 200),
+        ("Súp Bí Đỏ Âu", ["bí đỏ", "cream", "hành tây", "bơ"], ["Hầm bí đỏ nhừ xay mịn với kem.", "Thêm hành tây bơ cho thơm béo.", "Rắc hạt bí rang giòn lên mặt."], 240),
+        ("Mì Ý Sốt Bò Băm", ["mì ý", "thịt bò xay", "cà chua", "phô mai"], ["Luộc mì ý vừa chín tới dai ngon.", "Nấu sốt bò băm cà chua đậm đà.", "Chan sốt lên mì rắc thêm cheese."], 600),
+        ("Gà Parmigiana", ["ức gà", "cheese", "sốt cà chua", "bột chiên"], ["Tẩm bột ức gà chiên vàng giòn.", "Phủ sốt cà chua và phô mai lên.", "Đút lò cho phô mai tan chảy."], 580),
+        ("Salad Khoai Tây", ["khoai tây", "mayonnaise", "trứng", "ngò"], ["Luộc khoai tây cắt khối vuông nhỏ.", "Trộn cùng trứng luộc sốt mayonnaise.", "Thêm ngò tây thái vụn thơm mát."], 320),
+        ("Súp Hải Sản", ["tôm", "mực", "vẹm", "cà chua", "hành"], ["Ninh nước hải sản với rau củ.", "Thêm hải sản tươi nấu chín tới.", "Vị ngọt từ biển cả hòa quyện."], 350),
+        ("Pizza 4 Phô Mai", ["đế pizza", "mozzarella", "cheddar", "parmesan"], ["Phết dầu olive lên đế bánh nướng.", "Rắc 4 loại phô mai khác nhau.", "Nướng giòn thơm lừng mùi cheese."], 850),
+        ("Mì Ý Sốt Ngao", ["mì ý", "ngao", "rượu vang trắng", "tỏi"], ["Luộc mì spaghetti dai giòn mượt.", "Xào ngao với tỏi và rượu vang.", "Trộn mì vào chảo ngao thơm nồng."], 450),
+        ("Cá Chẽm Áp Chảo", ["cá chẽm", "chanh", "bơ", "khoai tây"], ["Áp chảo phi lê cá chẽm vàng giòn.", "Làm sốt bơ chanh tỏi rưới lên.", "Ăn kèm khoai tây chiên muối."], 480),
+        ("Bánh Mì Bruschetta", ["bánh mì", "cà chua", "tỏi", "basil"], ["Nướng bánh mì bơ tỏi cho giòn.", "Xắt cà chua trộn basil dầu olive.", "Đặt nhân lên lát bánh mì nướng."], 180),
+        ("Gnocchi Sốt Kem", ["khoai tây", "bột mì", "cheese", "cream"], ["Làm bánh gnocchi từ khoai tây bột.", "Luộc chín gnocchi nổi trên nước.", "Nấu sốt kem phô mai béo ngậy."], 520),
+        ("Pizza Rau Củ", ["đế pizza", "ớt chuông", "nấm", "ô liu"], ["Sắp xếp nấm ớt chuông lên đế bánh.", "Thêm ô liu đen và phô mai trắng.", "Nướng lò cho bánh thơm lừng rau."], 700),
+        ("Gà Nướng Hương Thảo", ["thịt gà", "rosemary", "chanh", "tỏi"], ["Ướp gà với lá hương thảo sả tỏi.", "Nướng nguyên con cho gà chín mọng.", "Vắt chanh lên gà nướng ăn kèm."], 610),
+        ("Spaghetti Marinara", ["mì ý", "sốt cà chua", "tôm", "mực"], ["Nấu sốt cà chua hải sản đặc sệt.", "Luộc mì spaghetti vừa chín tới.", "Trộn mì sốt rắc ngò tây khô."], 590),
+        ("Boeuf Bourguignon", ["thịt bò", "rượu vang đỏ", "nấm", "bacon"], ["Hầm thịt bò với rượu vang đỏ Pháp.", "Thêm nấm mỡ và bacon hun khói.", "Ninh thịt nhừ rã tan trong miệng."], 750),
+        ("Ratatouille Rau Củ", ["cà tím", "bí ngòi", "ớt chuông", "cà chua"], ["Thái lát mỏng các loại rau củ.", "Xếp vòng tròn xen kẽ trong khay.", "Nướng với sốt cà chua dầu olive."], 250),
+        ("Paella Hải Sản", ["gạo", "tôm", "vẹm", "nghệ", "mực"], ["Xào hải sản tỏi cho săn thơm.", "Nấu gạo với nước dùng nghệ vàng.", "Để cạn nước cho cơm cháy đáy nồi."], 680),
+        ("Fish and Chips", ["cá phi lê", "khoai tây", "bột bia", "bia"], ["Nhúng cá vào bột pha bia rồi chiên.", "Chiên khoai tây miếng dài giòn.", "Ăn kèm sốt tartar chua béo."], 650),
+        ("Mì Ý Sốt Kem Nấm", ["mì ý", "nấm", "cream", "cheese"], ["Xào nấm mỡ với bơ và tỏi phi.", "Cho kem tươi phô mai nấu sệt lại.", "Trộn mì spaghetti vào sốt nấm."], 610),
+        ("Sườn Bò Nướng BBQ", ["sườn bò", "sốt BBQ", "ngô ngọt"], ["Ướp sườn bò với sốt BBQ đặc biệt.", "Nướng sườn trên than hoa cháy xém.", "Ăn kèm ngô ngọt nướng bơ tỏi."], 820),
+        ("Salad Cá Ngừ Âu", ["cá ngừ đóng hộp", "xà lách", "mayonnaise"], ["Trộn cá ngừ sốt mayonnaise hành tây.", "Bày cá lên lớp rau xà lách tươi.", "Thêm bắp hạt và ô liu đen."], 300),
+        ("Sandwich Gà Nướng", ["bánh mì lát", "ức gà", "cheese", "mayo"], ["Kẹp ức gà nướng và phô mai vào bánh.", "Nướng áp chảo cho bánh giòn rụm.", "Dùng cho bữa trưa nhanh gọn."], 450),
+        ("Tôm Nướng Bơ Tỏi", ["tôm", "bơ", "tỏi", "ngò tây"], ["Ướp tôm tươi với bơ tỏi ngò tây.", "Nướng lò 180 độ trong 10 phút.", "Vỏ tôm đỏ hồng thơm mùi bơ."], 380),
+        ("Bò Cuộn Nấm Kim Châm", ["thịt bò lát", "nấm kim châm", "sốt"], ["Cuộn nấm kim châm vào thịt bò mỏng.", "Áp chảo bò cuộn nấm cho chín tới.", "Rưới sốt teriyaki hoặc sốt tiêu."], 420),
+        ("Pizza Hải Sản Âu", ["đế pizza", "tôm", "mực", "cheese"], ["Xếp tôm mực tươi lên đế pizza.", "Rắc lớp phô mai dày nướng giòn.", "Hương vị biển cả quyện phô mai."], 880),
+        ("Mì Ý Sốt Pesto", ["mì ý", "basil", "hạt thông", "cheese"], ["Xay nhuyễn basil hạt thông tỏi dầu.", "Trộn sốt xanh vào mì ý nóng.", "Vị thơm nồng nàn của lá húng tây."], 430),
+        ("Cá Hồi Sốt Cam", ["cá hồi", "nước cam", "măng tây", "bơ"], ["Áp chảo cá hồi chín hồng đào.", "Nấu sốt nước cam mật ong bơ.", "Rưới sốt cam thơm mát lên cá."], 490),
+        ("Thịt Cừu Hầm Rau Củ", ["thịt cừu", "khoai tây", "đậu hà lan"], ["Hầm thịt cừu với rượu trắng thảo mộc.", "Cho khoai tây đậu hà lan ninh mềm.", "Nước sốt cừu đậm đà dùng với bánh mì."], 680),
+        ("Súp Đậu Hà Lan", ["đậu hà lan", "cream", "bacon"], ["Nấu nhừ đậu hà lan rồi xay mịn.", "Thêm kem tươi rắc bacon chiên giòn.", "Màu xanh mát mắt vị bùi béo."], 220),
+        ("Salad Rau Mầm Trứng", ["rau mầm", "trứng", "dầu giấm"], ["Rửa rau mầm trộn dầu giấm tỏi.", "Thêm trứng luộc lòng đào thái đôi.", "Món ăn nhẹ giàu vitamin khoáng chất."], 150),
+        ("Bò Nướng Đá Âu", ["thịt bò thăn", "muối hồng", "tiêu"], ["Đặt miếng thăn bò lên đá nướng nóng.", "Lật mặt bò chín đều rắc muối tiêu.", "Giữ nguyên độ ngọt mọng của bò."], 550),
+        ("Súp Gà Ngô Kem", ["thịt gà", "ngô ngọt", "cream", "bơ"], ["Nấu súp gà ngô băm nhỏ hạt ngô.", "Thêm kem tươi khuấy đều sánh mịn.", "Vị ngọt từ ngô béo từ kem tươi."], 280),
+        ("Steak Cá Ngừ", ["cá ngừ", "vừng", "salad"], ["Áp chảo tái cá ngừ tẩm vừng đen.", "Thái lát mỏng trình bày ra đĩa.", "Ăn kèm salad dầu giấm chua ngọt."], 410)
+    ]
 
-def build_sample(label):
-    label_data = data_pool[label]
-    selected_items = []
+    all_recipes = []
+    # Kết hợp các danh sách thành 200 món
+    for items, region in [(north, "Miền Bắc"), (central, "Miền Trung"), (south, "Miền Nam"), (western, "Món Âu")]:
+        for dish in items:
+            all_recipes.append({
+                "name": dish[0],
+                "region": region,
+                "ingredients": dish[1],
+                "steps": dish[2],
+                "calories": dish[3]
+            })
 
-    # Giữ phần lõi đặc trưng, nhưng không cho nó chiếm toàn bộ tín hiệu
-    core_count = rng.randint(2, 5)
-    selected_items.extend(rng.sample(label_data["ingredients"], core_count))
+    with open('recipes.json', 'w', encoding='utf-8') as f:
+        json.dump(all_recipes, f, ensure_ascii=False, indent=4)
+    
+    print(f"✅ Đã tạo xong recipes.json với 200 món ăn THỰC TẾ và ĐỘC NHẤT.")
 
-    # Thêm nguyên liệu chung giữa nhiều vùng để bài toán khó hơn
-    shared_count = rng.randint(1, 3)
-    selected_items.extend(rng.sample(shared_pool, shared_count))
-
-    # Thỉnh thoảng trộn một nguyên liệu gây nhiễu từ vùng khác
-    if rng.random() < 0.32:
-        other_labels = [name for name in data_pool.keys() if name != label]
-        other_label = rng.choice(other_labels)
-        selected_items.append(rng.choice(data_pool[other_label]["ingredients"]))
-
-    # Từ khóa vùng miền chỉ xuất hiện không quá thường xuyên
-    if rng.random() < 0.28:
-        selected_items.append(rng.choice(label_data["keywords"]))
-
-    # Thêm một chút nhiễu từ ngữ chung để text giống thực tế hơn
-    if rng.random() < 0.22:
-        selected_items.append(rng.choice(["tươi", "sạch", "thơm", "đậm vị", "nhẹ"]))
-
-    # Loại trùng và xáo trộn thứ tự
-    selected_items = list(dict.fromkeys(selected_items))
-    rng.shuffle(selected_items)
-
-    return ", ".join(selected_items)
-
-rows = []
-
-labels = list(data_pool.keys())
-base_count = TARGET_ROWS // len(labels)
-remainder = TARGET_ROWS % len(labels)
-
-for index, label in enumerate(labels):
-    target_count = base_count + (1 if index < remainder else 0)
-
-    for _ in range(target_count):
-        rows.append({"ingredients": build_sample(label), "label": label})
-
-df = pd.DataFrame(rows)
-# Xóa các dòng trùng lặp nếu có
-df = df.drop_duplicates()
-df.to_csv("cuisine_data_5000.csv", index=False, encoding="utf-8-sig")
-
-print(f"Hoàn thành! Đã tạo {len(df)} dòng dữ liệu độc nhất.")
+if __name__ == "__main__":
+    generate_final_database()
